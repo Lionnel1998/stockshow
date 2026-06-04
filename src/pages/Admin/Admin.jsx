@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import apiService from '../../services/api'
 import { 
   Users, 
   Settings, 
@@ -23,8 +24,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('users')
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-
-  const users = [
+  const [users, setUsers] = useState([
     {
       id: 1,
       nom: 'Jean Dupont',
@@ -61,7 +61,28 @@ const Admin = () => {
       derniere_connexion: '2024-03-01',
       created_at: '2024-01-20'
     }
-  ]
+  ])
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await apiService.getUsers();
+        setUsers(fetchedUsers.map((user) => ({
+          id: user.idUser,
+          nom: user.nom,
+          email: user.email,
+          role: user.role?.nomRole || user.role || 'Utilisateur',
+          statut: user.statut_inscription || (user.est_actif ? 'actif' : 'inactif'),
+          derniere_connexion: user.derniere_connexion,
+          created_at: user.created_at
+        })));
+      } catch (error) {
+        console.error('Impossible de charger les utilisateurs', error);
+      }
+    };
+
+    loadUsers();
+  }, [])
 
   const companySettings = {
     nom: 'StockShow Pro',
@@ -81,16 +102,26 @@ const Admin = () => {
     { value: 'gerant', label: 'Gérant', permissions: ['dashboard', 'previsions', 'rapports', 'alertes_lecture'] }
   ]
 
-  const handleValidateUser = (userId) => {
-    console.log('Validation utilisateur:', userId)
+  const handleValidateUser = async (userId) => {
+    try {
+      await apiService.updateUserStatus(userId, 'actif');
+      setUsers((prev) => prev.map((user) => user.id === userId ? { ...user, statut: 'actif' } : user));
+    } catch (error) {
+      console.error('Erreur validation utilisateur :', error);
+    }
   }
 
-  const handleRejectUser = (userId) => {
-    console.log('Rejet utilisateur:', userId)
+  const handleRejectUser = async (userId) => {
+    try {
+      await apiService.updateUserStatus(userId, 'rejete');
+      setUsers((prev) => prev.map((user) => user.id === userId ? { ...user, statut: 'rejete' } : user));
+    } catch (error) {
+      console.error('Erreur rejet utilisateur :', error);
+    }
   }
 
   const handleRoleChange = (userId, newRole) => {
-    console.log('Changement rôle:', userId, newRole)
+    // TODO: Mettre à jour le rôle utilisateur via l'API
   }
 
   const getStatusColor = (status) => {
@@ -98,6 +129,7 @@ const Admin = () => {
       case 'actif':
         return 'bg-green-100 text-green-800'
       case 'inactif':
+      case 'rejete':
         return 'bg-red-100 text-red-800'
       case 'en_attente':
         return 'bg-yellow-100 text-yellow-800'
@@ -114,6 +146,8 @@ const Admin = () => {
         return 'Inactif'
       case 'en_attente':
         return 'En attente'
+      case 'rejete':
+        return 'Rejeté'
       default:
         return 'Inconnu'
     }

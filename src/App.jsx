@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 /* ── Couleurs ── */
-const P="#4318FF", P2="#7551FF", BG="#F4F7FE", W="#FFFFFF";
-const TXT="#2B3674", MUT="#A3AED0", BOR="#E9EDF7";
+const P="#8854C0", P2="#9F7AEA", BG="#FFFFFF", W="#FFFFFF";
+const TXT="#000000", MUT="#666666", BOR="#E5E5E5";
 const GR="#05CD99", RD="#EE5D50", OR="#FFB547";
-const GRAD=`linear-gradient(160deg,#4318FF 0%,#7551FF 55%,#5E35B1 100%)`;
+const GRAD=`linear-gradient(160deg,#8854C0 0%,#9F7AEA 55%,#B794F4 100%)`;
 const f="'DM Sans',system-ui,sans-serif";
 
 const ROLES={
@@ -13,6 +13,8 @@ const ROLES={
   gerant:{label:"Gérant",color:"#7551FF",icon:"bar_chart"},
   gestionnaire:{label:"Gestionnaire",color:"#05CD99",icon:"inventory_2"},
 };
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 /* ── Icône ── */
 const Ic=({n,s=20,c="inherit"})=>(
@@ -22,11 +24,14 @@ const Ic=({n,s=20,c="inherit"})=>(
 /* ── Toast notification ── */
 const Toast=({msg,type="success"})=>(
   <div style={{position:"fixed",bottom:24,right:24,zIndex:9999,
-    background:type==="error"?RD:GR,color:"#fff",borderRadius:14,
+    background:type==="error"?RD:type==="warning"?OR:GR,color:"#fff",borderRadius:14,
     padding:"14px 22px",display:"flex",alignItems:"center",gap:10,
-    boxShadow:`0 8px 24px ${type==="error"?RD:GR}66`,fontFamily:f,fontSize:14,fontWeight:700,
-    animation:"slideIn .3s ease"}}>
-    <Ic n={type==="error"?"error":"check_circle"} s={20} c="#fff"/>{msg}
+    boxShadow:`0 8px 24px ${type==="error"?RD:type==="warning"?OR:GR}66`,fontFamily:f,fontSize:14,fontWeight:700,
+    animation:"slideInBounce .4s ease",transform:"translateX(0)",transition:"all .3s ease"}}>
+    <div style={{animation:"iconPulse .6s ease infinite alternate"}}>
+      <Ic n={type==="error"?"error":type==="warning"?"warning":"check_circle"} s={20} c="#fff"/>
+    </div>
+    <span>{msg}</span>
   </div>
 );
 
@@ -199,17 +204,19 @@ const Sidebar=({active,set,role,logout,menus})=>(
         </div>
       </div>
     </div>
-    <div style={{margin:"11px 12px 4px",padding:"9px 11px",background:"rgba(255,255,255,.12)",
-      borderRadius:11,border:"1px solid rgba(255,255,255,.2)"}}>
+    <div onClick={()=>set("profile")} style={{margin:"11px 12px 4px",padding:"9px 11px",background:"rgba(255,255,255,.12)",
+      borderRadius:11,border:"1px solid rgba(255,255,255,.2)",cursor:"pointer",transition:"all .2s ease"}}
+      onMouseEnter={(e)=>e.target.style.background="rgba(255,255,255,.18)"}
+      onMouseLeave={(e)=>e.target.style.background="rgba(255,255,255,.12)"}>
       <div style={{display:"flex",alignItems:"center",gap:9}}>
         <div style={{width:34,height:34,borderRadius:"50%",background:"rgba(255,255,255,.25)",
           border:"2px solid rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"center",
           color:"#fff",fontWeight:800,fontSize:14,fontFamily:f,flexShrink:0}}>
           {ROLES[role]?.label[0]}
         </div>
-        <div>
+        <div style={{flex:1}}>
           <div style={{fontSize:11,fontWeight:700,color:"#fff",fontFamily:f}}>{ROLES[role]?.label}</div>
-          <div style={{fontSize:9,color:"rgba(255,255,255,.6)",fontFamily:f}}>Connecté</div>
+          <div style={{fontSize:9,color:"rgba(255,255,255,.6)",fontFamily:f}}>Voir le profil →</div>
         </div>
       </div>
     </div>
@@ -250,57 +257,237 @@ const Topbar=({title,sub,searchQuery,setSearchQuery,showNotifications,setShowNot
       <div style={{fontSize:19,fontWeight:900,color:TXT}}>{title}</div>
       {sub&&<div style={{fontSize:11,color:MUT}}>{sub}</div>}
     </div>
-    <div style={{display:"flex",alignItems:"center",gap:12}}>
+    <div style={{display:"flex",alignItems:"center",gap:12,position:"relative"}}>
       <div style={{display:"flex",alignItems:"center",gap:7,padding:"8px 14px",
-        background:BG,borderRadius:50,border:`1px solid ${BOR}`,cursor:"pointer"}}>
+        background:BG,borderRadius:50,border:`1px solid ${BOR}`,cursor:"pointer",transition:"all .2s ease",
+        boxShadow:searchQuery?"0 4px 12px rgba(67,24,255,0.15)":"none"}}>
         <Ic n="search" s={15} c={searchQuery?TXT:MUT}/>
         <input 
           type="text" 
-          placeholder="Rechercher..." 
+          placeholder="Rechercher produits, fournisseurs..." 
           value={searchQuery||""}
           onChange={e=>setSearchQuery(e.target.value)}
-          style={{fontSize:12,color:TXT,background:"transparent",border:"none",outline:"none",width:"120px"}}
+          onFocus={(e)=>e.target.parentElement.style.boxShadow="0 4px 12px rgba(67,24,255,0.15)"}
+          onBlur={(e)=>e.target.parentElement.style.boxShadow=searchQuery?"0 4px 12px rgba(67,24,255,0.15)":"none"}
+          style={{fontSize:12,color:TXT,background:"transparent",border:"none",outline:"none",width:"180px",transition:"width .2s ease"}}
         />
       </div>
+      
+      {/* Résultats de recherche en temps réel */}
+      {searchQuery && searchQuery.length > 1 && (
+        <SearchResults searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      )}
       <div onClick={()=>setShowNotifications(!showNotifications)} style={{position:"relative",width:38,height:38,borderRadius:"50%",
         background:BG,display:"flex",alignItems:"center",justifyContent:"center",
-        cursor:"pointer",border:`1px solid ${BOR}`}}>
+        cursor:"pointer",border:`1px solid ${BOR}`,transition:"transform .2s ease"}}
+        onMouseEnter={(e)=>e.target.style.transform="scale(1.05)"}
+        onMouseLeave={(e)=>e.target.style.transform="scale(1)"}>
         <Ic n="notifications" s={17} c={TXT}/>
         <span style={{position:"absolute",top:7,right:8,width:7,height:7,
-          borderRadius:"50%",background:RD,border:"2px solid #fff"}}/>
+          borderRadius:"50%",background:RD,border:"2px solid #fff",animation:"iconPulse 2s ease infinite"}}/>
       </div>
     </div>
   </div>
 );
 
-/* ── Layout ── */
-const Layout=({page,setPage,role,logout,menus,title,sub,children,toast,searchQuery,setSearchQuery,showNotifications,setShowNotifications})=>(
-  <div style={{display:"flex",minHeight:"100vh",background:BG,fontFamily:f}}>
-    <Sidebar active={page} set={setPage} role={role} logout={logout} menus={menus}/>
-    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <Topbar title={title} sub={sub} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showNotifications={showNotifications} setShowNotifications={setShowNotifications}/>
-      <main style={{flex:1,padding:24,overflowY:"auto"}}>{children}</main>
-    </div>
-    {toast&&<Toast msg={toast.msg} type={toast.type}/>}
-    {showNotifications && (
-      <div style={{position:"fixed",top:80,right:28,width:320,background:W,borderRadius:16,
-        boxShadow:"0 8px 32px rgba(0,0,0,.15)",border:`1px solid ${BOR}`,zIndex:8000,fontFamily:f}}>
-        <div style={{padding:16,borderBottom:`1px solid ${BOR}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <b style={{fontSize:14,color:TXT}}>Notifications</b>
-          <div onClick={()=>setShowNotifications(false)} style={{cursor:"pointer",padding:4}}>
-            <Ic n="close" s={16} c={MUT}/>
+/* ── Search Results ── */
+const SearchResults=({searchQuery,setSearchQuery})=>{
+  // Données de recherche simulées
+  const allData=[
+    ...D_PRODUITS.map(p=>({...p,type:"produit",icon:"inventory_2"})),
+    ...D_FOURNS.map(f=>({...f,type:"fournisseur",icon:"local_shipping"})),
+    ...D_CATS.map(c=>({...c,type:"categorie",icon:"category"})),
+  ];
+  
+  const results=allData.filter(item=> 
+    (item.nom||item.nomCategorie||item.nomCategorie)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.cat||item.description)?.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0,5);
+  
+  if(results.length===0) return null;
+  
+  return (
+    <div style={{position:"absolute",top:48,right:0,width:320,background:W,borderRadius:12,
+      boxShadow:"0 8px 24px rgba(0,0,0,.15)",border:`1px solid ${BOR}`,zIndex:7000,
+      animation:"slideDown .2s ease",fontFamily:f}}>
+      {results.map((r,i)=>(
+        <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",
+          cursor:"pointer",transition:"background .2s ease",borderBottom:i<results.length-1?`1px solid ${BOR}22`:"none"}}
+          onMouseEnter={(e)=>e.target.style.background=BG}
+          onMouseLeave={(e)=>e.target.style.background="transparent"}
+          onClick={() => {
+            setSearchQuery("");
+            // TODO: Intégrer la navigation vers la section correspondante
+          }}>
+          <div style={{width:32,height:32,borderRadius:8,background:P+"18",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic n={r.icon} s={16} c={P}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:600,color:TXT}}>
+              {r.nom || r.nomCategorie}
+              <span style={{fontSize:10,color:MUT,marginLeft:6,background:BG,padding:"2px 6px",borderRadius:4}}>
+                {r.type}
+              </span>
+            </div>
+            <div style={{fontSize:11,color:MUT}}>
+              {r.type==="produit" && `${r.cat} • ${r.stock} en stock`}
+              {r.type==="fournisseur" && `${r.adresse} • ${r.delai} jours`}
+              {r.type==="categorie" && r.description}
+            </div>
           </div>
         </div>
-        <div style={{padding:16}}>
-          <div style={{textAlign:"center",padding:"20px 0",color:MUT,fontSize:12}}>
-            <Ic n="notifications_off" s={32} c={MUT}/>
-            <div style={{marginTop:8}}>Aucune notification</div>
+      ))}
+      <div style={{padding:"8px 16px",textAlign:"center",background:BG,borderRadius:"0 0 12px 12px"}}>
+        <span style={{fontSize:11,color:P,fontWeight:600,cursor:"pointer"}}>
+          Voir tous les résultats ({allData.filter(item=> 
+            (item.nom||item.nomCategorie)?.toLowerCase().includes(searchQuery.toLowerCase())
+          ).length})
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/* ── Layout ── */
+const Layout=({page,setPage,role,logout,menus,title,sub,children,toast,searchQuery,setSearchQuery,showNotifications,setShowNotifications})=>{
+  // Exposer setPage globalement pour les actions rapides
+  useEffect(() => {
+    window.setPage = setPage;
+    window.showNotifications = setShowNotifications;
+    
+    // Gérer les événements personnalisés
+    const handleNavigate = (e) => {
+      setPage(e.detail.page);
+      setShowNotifications(false);
+    };
+    
+    const handleFilterCriticalStock = () => {
+      setPage(role === "admin" ? "a_seuils" : "g_prod");
+      setShowNotifications(false);
+    };
+    
+    window.addEventListener('navigate', handleNavigate);
+    window.addEventListener('filterCriticalStock', handleFilterCriticalStock);
+    
+    return () => {
+      window.removeEventListener('navigate', handleNavigate);
+      window.removeEventListener('filterCriticalStock', handleFilterCriticalStock);
+      delete window.setPage;
+      delete window.showNotifications;
+    };
+  }, [setPage, setShowNotifications, role]);
+
+  return (
+    <>
+      <div style={{display:"flex",minHeight:"100vh",background:BG,fontFamily:f}}>
+        <Sidebar active={page} set={setPage} role={role} logout={logout} menus={menus}/>
+        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <Topbar title={title} sub={sub} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showNotifications={showNotifications} setShowNotifications={setShowNotifications}/>
+          <main style={{flex:1,padding:24,overflowY:"auto"}}>{children}</main>
+        </div>
+      </div>
+      {toast&&<Toast msg={toast.msg} type={toast.type}/>}
+      {showNotifications && (
+      <div style={{position:"fixed",top:80,right:28,width:360,background:W,borderRadius:16,
+        boxShadow:"0 8px 32px rgba(0,0,0,.15)",border:`1px solid ${BOR}`,zIndex:8000,fontFamily:f,
+        animation:"slideDown .3s ease"}}>
+        <div style={{padding:16,borderBottom:`1px solid ${BOR}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <b style={{fontSize:14,color:TXT}}>Notifications</b>
+          <div onClick={()=>setShowNotifications(false)} style={{cursor:"pointer",padding:4,borderRadius:6,transition:"background .2s"}} 
+               onMouseEnter={(e)=>e.target.style.background=BOR} onMouseLeave={(e)=>e.target.style.background="transparent"}>
+            <Ic n="close" s={16} c={MUT}/>
+            </div>
+          </div>
+          <div style={{padding:16,maxHeight:400,overflowY:"auto"}}>
+            {/* Notifications récentes */}
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:12,color:MUT,marginBottom:8,fontWeight:600}}>RÉCENTES</div>
+              {[
+                {type:"success",icon:"check_circle",title:"Produit ajouté","msg":"T-shirt coton ajouté avec succès",time:"Il y a 2 min"},
+                {type:"warning",icon:"warning",title:"Stock faible","msg":"Sac à main cuir (12 unités)",time:"Il y a 15 min"},
+                {type:"error",icon:"error",title:"Rupture de stock","msg":"T-shirt coton en rupture",time:"Il y a 1 heure"},
+              ].map((n,i)=>(
+                <div key={i} style={{display:"flex",gap:12,padding:12,borderRadius:10,marginBottom:8,
+                  background:n.type==="error"?RD+"0A":n.type==="warning"?OR+"0A":GR+"0A",
+                  border:`1px solid ${n.type==="error"?RD+"22":n.type==="warning"?OR+"22":GR+"22"}`,
+                  animation:"fadeInUp .3s ease",animationDelay:`${i*0.1}s`,cursor:"pointer",
+                  transition:"transform .2s ease"}} 
+                     onMouseEnter={(e)=>e.target.style.transform="translateX(-4px)"}
+                     onMouseLeave={(e)=>e.target.style.transform="translateX(0)"}>
+                  <div style={{width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",
+                    background:n.type==="error"?RD:n.type==="warning"?OR:GR,flexShrink:0}}>
+                    <Ic n={n.icon} s={18} c="#fff"/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:TXT,marginBottom:2}}>{n.title}</div>
+                    <div style={{fontSize:11,color:MUT,marginBottom:2}}>{n.msg}</div>
+                    <div style={{fontSize:10,color:MUT}}>{n.time}</div>
+                  </div>
+                </div>
+              ))}
+          </div>
+          
+          {/* Actions rapides */}
+          <div style={{background:BG,borderRadius:10,padding:12}}>
+            <div style={{fontSize:12,color:MUT,marginBottom:8,fontWeight:600}}>ACTIONS RAPIDES</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:8,borderRadius:6,cursor:"pointer",
+                transition:"background .2s ease"}} 
+                   onMouseEnter={(e)=>e.target.style.background=W}
+                   onMouseLeave={(e)=>e.target.style.background="transparent"}
+                   onClick={()=>{
+                     // Fermer les notifications
+                     setSearchQuery("");
+                     // Naviguer vers la création de commande fournisseur
+                     if(window.setPage) window.setPage("g_cmdf");
+                     // Sinon, essayer de trouver le bon composant
+                     const event = new CustomEvent('navigate', { detail: { page: 'g_cmdf' } });
+                     window.dispatchEvent(event);
+                   }}>
+                <Ic n="add_shopping_cart" s={16} c={P}/>
+                <span style={{fontSize:12,color:TXT}}>Créer une commande fournisseur</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:8,borderRadius:6,cursor:"pointer",
+                transition:"background .2s ease"}} 
+                   onMouseEnter={(e)=>e.target.style.background=W}
+                   onMouseLeave={(e)=>e.target.style.background="transparent"}
+                   onClick={()=>{
+                     // Fermer les notifications
+                     setSearchQuery("");
+                     // Naviguer vers les produits avec filtre stock critique
+                     if(window.setPage) window.setPage("g_prod");
+                     // Appliquer un filtre pour les stocks critiques
+                     const event = new CustomEvent('filterCriticalStock', { detail: {} });
+                     window.dispatchEvent(event);
+                   }}>
+                <Ic n="inventory" s={16} c={GR}/>
+                <span style={{fontSize:12,color:TXT}}>Voir les stocks critiques</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:8,borderRadius:6,cursor:"pointer",
+                transition:"background .2s ease"}} 
+                   onMouseEnter={(e)=>e.target.style.background=W}
+                   onMouseLeave={(e)=>e.target.style.background="transparent"}
+                   onClick={()=>{
+                     // Fermer les notifications
+                     setSearchQuery("");
+                     // Naviguer vers les rapports
+                     if(window.setPage) window.setPage("r_rapp");
+                     // Sinon, essayer la page de rapports admin
+                     const event = new CustomEvent('navigate', { detail: { page: 'r_rapp' } });
+                     window.dispatchEvent(event);
+                   }}>
+                <Ic n="bar_chart" s={16} c={OR}/>
+                <span style={{fontSize:12,color:TXT}}>Consulter les rapports</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     )}
-  </div>
-);
+    </>
+  );
+};
 
 /* ── Panneau gauche violet ── */
 const LeftPanel=()=>(
@@ -671,23 +858,48 @@ const AdminApp=({logout})=>{
   const [F,setF]=useState({});
   const [searchQuery,setSearchQuery]=useState("");
   const [showNotifications,setShowNotifications]=useState(false);
+  
+  // États pour la gestion des rôles
+  const [roles,setRoles]=useState([
+    {idRole:1,nomRole:"Administrateur",description:"Accès complet à toutes les fonctionnalités",niveau_acces:100,color:P,icon:"admin_panel_settings"},
+    {idRole:2,nomRole:"Gérant",description:"Supervision et rapports complets",niveau_acces:70,color:P2,icon:"bar_chart"},
+    {idRole:3,nomRole:"Gestionnaire",description:"Gestion des opérations quotidiennes",niveau_acces:50,color:GR,icon:"inventory_2"},
+  ]);
+  
   const sf=(k,v)=>setF(p=>({...p,[k]:v}));
   const closeM=()=>{setModal(null);setF({});};
 
-  // Recharger les inscriptions depuis localStorage périodiquement
+  const persistInscriptions = (updatedInscs) => {
+    const storedOnly = updatedInscs.filter((ins) => !D_INSCRIPTIONS.some((base) => base.id === ins.id));
+    localStorage.setItem('inscriptions', JSON.stringify(storedOnly));
+  };
+
+  const updateInscriptionStatus = async (id, statut) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/public/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ statut_inscription: statut }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Erreur de mise à jour du statut');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur API mise à jour statut inscription :', error);
+      throw error;
+    }
+  };
+
+  // Charger les inscriptions depuis localStorage au montage
   useEffect(() => {
-    const reloadInscriptions = () => {
-      const stored = JSON.parse(localStorage.getItem('inscriptions') || '[]');
-      setInscs([...D_INSCRIPTIONS, ...stored]);
-    };
-    
-    // Recharger au montage
-    reloadInscriptions();
-    
-    // Recharger toutes les 5 secondes pour voir les nouvelles inscriptions
-    const interval = setInterval(reloadInscriptions, 5000);
-    
-    return () => clearInterval(interval);
+    const stored = JSON.parse(localStorage.getItem('inscriptions') || '[]');
+    setInscs([...D_INSCRIPTIONS, ...stored]);
   }, []);
 
   /* Users CRUD */
@@ -695,11 +907,11 @@ const AdminApp=({logout})=>{
     if(!F.nom?.trim()||!F.email?.trim()||!F.role){show("Veuillez remplir tous les champs requis","error");return;}
     if(F._id){
       setUsers(u=>u.map(x=>x.id===F._id?{...x,nom:F.nom,email:F.email,role:F.role}:x));
-      show("Utilisateur modifié avec succès ✅");
+      show("Utilisateur modifié avec succès ?");
     } else {
       const nu={id:Date.now(),nom:F.nom,email:F.email,role:F.role,actif:true,connexion:"Jamais"};
       setUsers(u=>[...u,nu]);
-      show("Compte créé avec succès ✅");
+      show("Compte créé avec succès ?");
     }
     closeM();
   };
@@ -708,20 +920,69 @@ const AdminApp=({logout})=>{
   }});
   const toggleUser=(id)=>{
     setUsers(u=>u.map(x=>x.id===id?{...x,actif:!x.actif}:x));
-    show("Statut mis à jour ✅");
+    show("Statut mis à jour ?");
   };
 
-  /* Inscriptions */
-  const valider=(id,action)=>{
-    if(action==="ok"){
-      const ins=inscs.find(x=>x.id===id);
-      const roleKey=ins.role==="Gérant"?"gerant":"gestionnaire";
-      setUsers(u=>[...u,{id:Date.now(),nom:ins.nom,email:ins.email,role:roleKey,actif:true,connexion:"Jamais"}]);
-      setInscs(i=>i.map(x=>x.id===id?{...x,statut:"validee"}:x));
-      show("Inscription validée — compte créé ✅");
+  /* Roles CRUD - definirRole() et modifierRole() */
+  const definirRole=()=>{
+    if(!F.nomRole?.trim()||!F.description?.trim()||!F.niveau_acces){show("Veuillez remplir tous les champs requis","error");return;}
+    const nouveauRole={
+      idRole:Date.now(),
+      nomRole:F.nomRole,
+      description:F.description,
+      niveau_acces:+F.niveau_acces,
+      color:P,
+      icon:"admin_panel_settings"
+    };
+    setRoles(r=>[...r,nouveauRole]);
+    show("Rôle défini avec succès ?");
+    closeM();
+  };
+
+  const modifierRole=()=>{
+    if(!F.nomRole?.trim()||!F.description?.trim()||!F.niveau_acces){show("Veuillez remplir tous les champs requis","error");return;}
+    setRoles(r=>r.map(x=>x.idRole===F._id?{...x,nomRole:F.nomRole,description:F.description,niveau_acces:+F.niveau_acces}:x));
+    show("Rôle modifié avec succès ?");
+    closeM();
+  };
+
+  const saveRole=()=>{
+    if(F._id){
+      modifierRole();
     } else {
-      setInscs(i=>i.map(x=>x.id===id?{...x,statut:"rejetee"}:x));
-      show("Inscription rejetée");
+      definirRole();
+    }
+  };
+
+  const delRole=(id)=>setConfirm({msg:"Supprimer ce rôle ? Attention : les utilisateurs avec ce rôle seront affectés.",ok:()=>{
+    setRoles(r=>r.filter(x=>x.idRole!==id));show("Rôle supprimé");setConfirm(null);
+  }});
+
+  /* Inscriptions */
+  const valider=async (id,action)=>{
+    const ins=inscs.find(x=>x.id===id);
+    if(!ins){
+      show("Inscription introuvable", "error");
+      return;
+    }
+
+    const statut = action === "ok" ? "actif" : "rejete";
+
+    try {
+      await updateInscriptionStatus(id, statut);
+      const updatedInscs = inscs.map(x => x.id === id ? { ...x, statut: action === "ok" ? "validee" : "rejetee" } : x);
+      setInscs(updatedInscs);
+      persistInscriptions(updatedInscs);
+
+      if (action === "ok") {
+        const roleKey = ins.role === "Gérant" ? "gerant" : "gestionnaire";
+        setUsers(u => [...u, { id: Date.now(), nom: ins.nom, email: ins.email, role: roleKey, actif: true, connexion: "Jamais" }]);
+        show("Inscription validée — compte créé ✅");
+      } else {
+        show("Inscription rejetée");
+      }
+    } catch (error) {
+      show(error.message || "Erreur de mise à jour du statut", "error");
     }
   };
 
@@ -818,9 +1079,9 @@ const AdminApp=({logout})=>{
             <THead cols={["#","Nom","Email","Rôle","Dernière connexion","Statut","Actions"]}/>
             <tbody>
               {users.map((u,i)=>(
-                <TRow key={u.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{u.id}</span>,
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <TRow key={u.id} i={i} cells={[
+                    <span key={0} style={{color:MUT,fontSize:11}}>#{u.id}</span>,
+                    <div key={1} style={{display:"flex",alignItems:"center",gap:8}}>
                     <div style={{width:30,height:30,borderRadius:"50%",
                       background:ROLES[u.role]?.color+"22",display:"flex",alignItems:"center",
                       justifyContent:"center",color:ROLES[u.role]?.color,fontWeight:800,fontSize:12}}>
@@ -828,11 +1089,11 @@ const AdminApp=({logout})=>{
                     </div>
                     <b style={{color:TXT}}>{u.nom}</b>
                   </div>,
-                  <span style={{color:P,fontSize:12}}>{u.email}</span>,
-                  <Chip col={ROLES[u.role]?.color||P}>{ROLES[u.role]?.label||u.role}</Chip>,
-                  <span style={{color:MUT,fontSize:11}}>{u.connexion}</span>,
-                  <Chip col={u.actif?GR:RD}>{u.actif?"Actif":"Inactif"}</Chip>,
-                  <div style={{display:"flex",gap:5}}>
+                  <span key={2} style={{color:P,fontSize:12}}>{u.email}</span>,
+                  <Chip key={3} col={ROLES[u.role]?.color||P}>{ROLES[u.role]?.label||u.role}</Chip>,
+                  <span key={4} style={{color:MUT,fontSize:11}}>{u.connexion}</span>,
+                  <Chip key={5} col={u.actif?GR:RD}>{u.actif?"Actif":"Inactif"}</Chip>,
+                  <div key={6} style={{display:"flex",gap:5}}>
                     <Btn sm ic="edit" v="ghost" onClick={()=>{setF({_id:u.id,nom:u.nom,email:u.email,role:u.role});setModal("user");}}>Modifier</Btn>
                     <Btn sm ic={u.actif?"person_off":"person"} v="outline" col={OR} onClick={()=>toggleUser(u.id)}>{u.actif?"Désactiver":"Activer"}</Btn>
                     <Btn sm ic="delete" v="outline" col={RD} onClick={()=>delUser(u.id)}>Suppr.</Btn>
@@ -896,12 +1157,64 @@ const AdminApp=({logout})=>{
       </div>
     ),
     a_roles:(
-      <Card>
-        <SH title="Matrice des permissions" ic="grid_view"/>
-        <table style={{width:"100%",borderCollapse:"collapse"}}>
-          <THead cols={["Module","Administrateur","Gérant","Gestionnaire"]}/>
-          <tbody>
-            {[["Tableau de bord","✅ Complet","✅ Complet","✅ Limité"],
+      <div>
+        <Card style={{marginBottom:18}}>
+          <SH title={`Gestion des rôles (${roles.length})`} ic="group"
+            action={<Btn ic="add" onClick={()=>{setF({});setModal("role");}}>Définir un rôle</Btn>}/>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:16}}>
+            {roles.map((role)=>(
+              <div key={role.idRole} style={{background:W,borderRadius:12,padding:16,border:`2px solid ${role.color+"22"}`,className:"hover-scale"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                  <div style={{width:40,height:40,borderRadius:8,background:role.color+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Ic n={role.icon} s={20} c={role.color}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:700,color:TXT}}>{role.nomRole}</div>
+                    <div style={{fontSize:11,color:MUT}}>ID: #{role.idRole}</div>
+                  </div>
+                </div>
+                <div style={{fontSize:12,color:MUT,marginBottom:8,lineHeight:1.4}}>{role.description}</div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{flex:1,height:6,borderRadius:3,background:BG,overflow:"hidden"}}>
+                    <div style={{width:`${role.niveau_acces}%`,height:"100%",background:role.color}}/>
+                  </div>
+                  <span style={{fontSize:11,fontWeight:700,color:role.color}}>{role.niveau_acces}%</span>
+                </div>
+                <div style={{fontSize:10,color:MUT,marginTop:4}}>Niveau d'accès</div>
+                <div style={{display:"flex",gap:5,marginTop:8}}>
+                  <Btn sm ic="edit" v="ghost" onClick={()=>{setF({_id:role.idRole,nomRole:role.nomRole,description:role.description,niveau_acces:role.niveau_acces.toString()});setModal("role");}}>Modifier</Btn>
+                  {role.idRole>3 && <Btn sm ic="delete" v="outline" col={RD} onClick={()=>delRole(role.idRole)}>Suppr.</Btn>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card>
+          <SH title="Permissions par niveau d'accès" ic="grid_view"/>
+          <div style={{background:BG,borderRadius:11,padding:14,marginBottom:16}}>
+            <div style={{fontSize:12,color:MUT,marginBottom:8}}>
+              <Ic n="info" s={14} c={MUT}/> Les permissions sont automatiquement attribuées selon le niveau d'accès :
+            </div>
+            <div style={{display:"flex",gap:20,fontSize:11}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:12,height:12,borderRadius:2,background:GR}}/>
+                <span>80-100% : Accès complet</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:12,height:12,borderRadius:2,background:OR}}/>
+                <span>50-79% : Accès partiel</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:12,height:12,borderRadius:2,background:RD}}/>
+                <span>0-49% : Accès limité</span>
+              </div>
+            </div>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <THead cols={["Module","Niveau 100%","Niveau 70%","Niveau 50%"]}/>
+            <tbody>
+            {[ ["Tableau de bord","✅ Complet","✅ Complet","✅ Limité"],
               ["Gérer utilisateurs","✅ CRUD","❌ Non","❌ Non"],
               ["Valider inscriptions","✅ Oui","❌ Non","❌ Non"],
               ["Gérer rôles & seuils","✅ Oui","❌ Non","❌ Non"],
@@ -918,15 +1231,44 @@ const AdminApp=({logout})=>{
             ].map(([m,a,g,gs],i)=>{
               const c=v=>v.startsWith("✅")?GR:v.startsWith("👁")?OR:RD;
               return <TRow key={i} i={i} cells={[
-                <b style={{color:TXT,fontSize:13}}>{m}</b>,
-                <span style={{color:c(a),fontWeight:600,fontSize:12}}>{a}</span>,
-                <span style={{color:c(g),fontWeight:600,fontSize:12}}>{g}</span>,
-                <span style={{color:c(gs),fontWeight:600,fontSize:12}}>{gs}</span>,
+                <b key={0} style={{color:TXT,fontSize:13}}>{m}</b>,
+                <span key={1} style={{color:c(a),fontWeight:600,fontSize:12}}>{a}</span>,
+                <span key={2} style={{color:c(g),fontWeight:600,fontSize:12}}>{g}</span>,
+                <span key={3} style={{color:c(gs),fontWeight:600,fontSize:12}}>{gs}</span>,
               ]}/>;
             })}
           </tbody>
-        </table>
-      </Card>
+          </table>
+        </Card>
+        
+        {modal==="role"&&(
+          <Modal title={F._id?"Modifier le rôle":"Définir un nouveau rôle"} onClose={closeM} w={500}>
+            <Inp label="Nom du rôle" value={F.nomRole} set={v=>sf("nomRole",v)} ph="Ex: Superviseur" ic="admin_panel_settings" req/>
+            <Inp label="Description" value={F.description} set={v=>sf("description",v)} ph="Décrivez les responsabilités de ce rôle" ic="description" req/>
+            <Inp label="Niveau d'accès (0-100)" value={F.niveau_acces} set={v=>sf("niveau_acces",v)} ph="100 pour accès complet" type="number" ic="tune" req/>
+            <div style={{background:BG,borderRadius:11,padding:12,marginBottom:16}}>
+              <div style={{fontSize:12,color:MUT,marginBottom:8}}>Aperçu du niveau d'accès :</div>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{flex:1,height:8,borderRadius:4,background:BG,overflow:"hidden"}}>
+                  <div style={{width:`${F.niveau_acces||0}%`,height:"100%",background:P,transition:"width .3s"}}/>
+                </div>
+                <span style={{fontSize:14,fontWeight:700,color:P}}>{F.niveau_acces||0}%</span>
+              </div>
+              <div style={{fontSize:11,color:MUT,marginTop:6}}>
+                {F.niveau_acces>=80?"Accès complet aux fonctionnalités" : 
+                 F.niveau_acces>=50?"Accès partiel avec restrictions" : 
+                 F.niveau_acces>0?"Accès limité aux opérations de base" : 
+                 "Aucun accès"}
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,marginTop:8}}>
+              <Btn full ic="save" onClick={saveRole}>{F._id?"Enregistrer les modifications":"Définir le rôle"}</Btn>
+              <Btn v="outline" onClick={closeM} style={{minWidth:90}}>Annuler</Btn>
+            </div>
+          </Modal>
+        )}
+        {confirm&&<Confirm msg={confirm.msg} onOk={confirm.ok} onCancel={()=>setConfirm(null)}/>}
+      </div>
     ),
     a_seuils:(
       <Card>
@@ -978,6 +1320,123 @@ const AdminApp=({logout})=>{
         <Btn ic="save" onClick={()=>show("Informations de l'entreprise enregistrées ✅")}>Enregistrer</Btn>
       </Card>
     ),
+    profile:(
+      <div style={{maxWidth:800,margin:"0 auto"}}>
+        <Card style={{marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:20,padding:"20px 0"}}>
+            <div style={{width:80,height:80,borderRadius:"50%",background:GRAD,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              border:"3px solid #fff",boxShadow:"0 8px 24px rgba(136,84,192,0.25)"}}>
+              <Ic n="person" s={36} c="#fff"/>
+            </div>
+            <div style={{flex:1}}>
+              <h2 style={{margin:0,color:TXT,fontSize:24,fontFamily:f}}>Mon Profil</h2>
+              <p style={{margin:0,color:MUT,fontSize:14,fontFamily:f}}>Gérez vos informations personnelles et préférences</p>
+            </div>
+            <Btn ic="edit" v="outline">Modifier le profil</Btn>
+          </div>
+        </Card>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+          <Card>
+            <SH title="Informations personnelles" ic="person"/>
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="badge" s={18} c={P}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Nom complet</div>
+                  <div style={{fontSize:14,fontWeight:600,color:TXT,fontFamily:f}}>Admin Principal</div>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="mail" s={18} c={P}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Email</div>
+                  <div style={{fontSize:14,fontWeight:600,color:TXT,fontFamily:f}}>admin@pme.bj</div>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="admin_panel_settings" s={18} c={P}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Rôle</div>
+                  <Chip col={ROLES.admin.color}>{ROLES.admin.label}</Chip>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="schedule" s={18} c={P}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Dernière connexion</div>
+                  <div style={{fontSize:14,fontWeight:600,color:TXT,fontFamily:f}}>18/04 08:30</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <SH title="Statut du compte" ic="security"/>
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="check_circle" s={18} c={GR}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Statut</div>
+                  <Chip col={GR}>Compte actif</Chip>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="verified" s={18} c={GR}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Vérification</div>
+                  <Chip col={GR}>Email vérifié</Chip>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="shield" s={18} c={P}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Niveau d'accès</div>
+                  <div style={{fontSize:14,fontWeight:600,color:TXT,fontFamily:f}}>100% - Accès complet</div>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <Ic n="calendar_today" s={18} c={P}/>
+                <div>
+                  <div style={{fontSize:12,color:MUT,fontFamily:f}}>Membre depuis</div>
+                  <div style={{fontSize:14,fontWeight:600,color:TXT,fontFamily:f}}>01 Janvier 2023</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card style={{marginTop:20}}>
+          <SH title="Actions rapides" ic="bolt"/>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+            <Btn v="outline" ic="lock" col={P}>Changer le mot de passe</Btn>
+            <Btn v="outline" ic="download" col={GR}>Exporter mes données</Btn>
+            <Btn v="outline" ic="settings" col={OR}>Préférences</Btn>
+          </div>
+        </Card>
+
+        <Card style={{marginTop:20}}>
+          <SH title="Activité récente" ic="history"/>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {[
+              {action:"Modification du produit 'Chaussures Nike'",date:"18/04 14:30",ic:"edit"},
+              {action:"Validation de l'inscription de Marie Dupont",date:"18/04 09:15",ic:"check_circle"},
+              {action:"Connexion au système",date:"18/04 08:30",ic:"login"},
+            ].map((act,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px",
+                background:BG,borderRadius:11,border:`1px solid ${BOR}`}}>
+                <Ic n={act.ic} s={16} c={P}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,color:TXT,fontFamily:f}}>{act.action}</div>
+                  <div style={{fontSize:11,color:MUT,fontFamily:f}}>{act.date}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    ),
   };
 
   return (
@@ -1002,6 +1461,7 @@ const GEST_M=[
   {id:"g_mouvs",icon:"swap_horiz",label:"Mouvements de stock"},
   {id:"g_pertes",icon:"trending_down",label:"Enregistrer pertes"},
   {id:"g_alertes",icon:"notifications",label:"Alertes"},
+  {id:"g_recom",icon:"shopping_bag",label:"Recommandations d'achat"},
 ];
 
 const GestApp=({logout})=>{
@@ -1020,6 +1480,15 @@ const GestApp=({logout})=>{
   const [F,setF]=useState({});
   const [searchQuery,setSearchQuery]=useState("");
   const [showNotifications,setShowNotifications]=useState(false);
+  
+  // Données pour les recommandations d'achat
+  const [recs]=useState([
+    {id:1,produit:"T-shirt coton",qte:25,justif:"Stock critique (3 unités) + prévision ventes",dl:"05/04",prio:"URGENTE",col:RD,statut:"attente"},
+    {id:2,produit:"Sac à main cuir",qte:15,justif:"Stock faible (12 unités) + saisonnalité",dl:"08/04",prio:"NORMALE",col:OR,statut:"attente"},
+    {id:3,produit:"Chaussures Nike",qte:40,justif:"Recommandation IA basée sur tendance +30%",dl:"12/04",prio:"NORMALE",col:P,statut:"attente"},
+    {id:4,produit:"Montre classique",qte:20,justif:"Rotation rapide + marge élevée",dl:"15/04",prio:"BASSE",col:GR,statut:"attente"},
+  ]);
+  
   const sf=(k,v)=>setF(p=>({...p,[k]:v}));
   const closeM=()=>{setModal(null);setF({});};
 
@@ -1132,10 +1601,14 @@ const GestApp=({logout})=>{
   const marquerLue=(id)=>{setAlertes(a=>a.map(x=>x.id===id?{...x,lue:true}:x));show("Alerte marquée comme lue ✅");};
   const traiter=(id)=>{setAlertes(a=>a.filter(x=>x.id!==id));show("Alerte traitée et archivée ✅");};
 
+  /* RECOMMANDATIONS */
+  const valRec=(id)=>{setRecs(r=>r.map(x=>x.id===id?{...x,statut:"validee"}:x));show("Recommandation validée ✅");};
+  const ignRec=(id)=>{setRecs(r=>r.map(x=>x.id===id?{...x,statut:"ignoree"}:x));show("Recommandation ignorée");};
+
   const titleMap={g_prod:"Gérer les produits",g_cats:"Gérer les catégories",
     g_fourns:"Gérer les fournisseurs",g_ventes:"Commandes clients",
     g_cmdf:"Commandes fournisseurs",g_mouvs:"Mouvements de stock",
-    g_pertes:"Enregistrer les pertes",g_alertes:"Alertes de stock"};
+    g_pertes:"Enregistrer les pertes",g_alertes:"Alertes de stock",g_recom:"Recommandations d'achat"};
 
   const content={
     g_prod:(
@@ -1156,15 +1629,15 @@ const GestApp=({logout})=>{
               {produits.map((p,i)=>{
                 const crit=p.stock<=p.seuil;
                 return <TRow key={p.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{p.id}</span>,
-                  <b style={{color:TXT}}>{p.nom}</b>,
-                  <Chip>{p.cat}</Chip>,
-                  <span style={{color:GR,fontWeight:700}}>{p.pv.toLocaleString()} F</span>,
-                  <b style={{color:crit?RD:GR,fontSize:14}}>{p.stock}{crit?" ⚠":""}</b>,
-                  <span style={{color:OR,fontWeight:700}}>{p.seuil}</span>,
-                  <span style={{color:MUT,fontSize:12}}>{p.fourn}</span>,
-                  crit?<Chip col={RD}>Critique</Chip>:<Chip col={GR}>OK</Chip>,
-                  <div style={{display:"flex",gap:5}}>
+                  <span key={0} style={{color:MUT,fontSize:11}}>#{p.id}</span>,
+                  <b key={1} style={{color:TXT}}>{p.nom}</b>,
+                  <Chip key={2}>{p.cat}</Chip>,
+                  <span key={3} style={{color:GR,fontWeight:700}}>{p.pv.toLocaleString()} F</span>,
+                  <b key={4} style={{color:crit?RD:GR,fontSize:14}}>{p.stock}{crit?" ⚠":""}</b>,
+                  <span key={5} style={{color:OR,fontWeight:700}}>{p.seuil}</span>,
+                  <span key={6} style={{color:MUT,fontSize:12}}>{p.fourn}</span>,
+                  crit?<Chip key={7} col={RD}>Critique</Chip>:<Chip key={7} col={GR}>OK</Chip>,
+                  <div key={8} style={{display:"flex",gap:5}}>
                     <Btn sm ic="edit" v="ghost" onClick={()=>{setF({_id:p.id,nom:p.nom,cat:p.cat,fourn:p.fourn,pv:p.pv.toString(),pa:p.pa.toString(),stock:p.stock.toString(),seuil:p.seuil.toString()});setModal("prod");}}>Modifier</Btn>
                     <Btn sm ic="delete" v="outline" col={RD} onClick={()=>delProd(p.id)}>Suppr.</Btn>
                   </div>
@@ -1256,18 +1729,18 @@ const GestApp=({logout})=>{
             <THead cols={["#","Nom","Téléphone","Email","Adresse","Délai","Actions"]}/>
             <tbody>
               {fourns.map((f,i)=>(
-                <TRow key={f.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{f.id}</span>,
-                  <b style={{color:TXT}}>{f.nom}</b>,<span>{f.tel}</span>,
-                  <span style={{color:P,fontSize:12}}>{f.email}</span>,
-                  <span style={{color:MUT,fontSize:12}}>{f.adresse}</span>,
-                  <Chip col={GR}>{f.delai}j</Chip>,
-                  <div style={{display:"flex",gap:5}}>
-                    <Btn sm ic="edit" v="ghost" onClick={()=>{setF({_id:f.id,nom:f.nom,tel:f.tel,email:f.email,adresse:f.adresse,delai:f.delai.toString()});setModal("fourn");}}>Modifier</Btn>
-                    <Btn sm ic="delete" v="outline" col={RD} onClick={()=>delFourn(f.id)}>Suppr.</Btn>
-                  </div>
-                ]}/>
-              ))}
+                  <TRow key={f.id} i={i} cells={[
+                    <span key={0} style={{color:MUT,fontSize:11}}>#{f.id}</span>,
+                    <b key={1} style={{color:TXT}}>{f.nom}</b>,<span key={2}>{f.tel}</span>,
+                    <span key={3} style={{color:P,fontSize:12}}>{f.email}</span>,
+                    <span key={4} style={{color:MUT,fontSize:12}}>{f.adresse}</span>,
+                    <Chip key={5} col={GR}>{f.delai}j</Chip>,
+                    <div key={6} style={{display:"flex",gap:5}}>
+                      <Btn sm ic="edit" v="ghost" onClick={()=>{setF({_id:f.id,nom:f.nom,tel:f.tel,email:f.email,adresse:f.adresse,delai:f.delai.toString()});setModal("fourn");}}>Modifier</Btn>
+                      <Btn sm ic="delete" v="outline" col={RD} onClick={()=>delFourn(f.id)}>Suppr.</Btn>
+                    </div>
+                  ]}/>
+                ))}
             </tbody>
           </table>
         </Card>
@@ -1306,13 +1779,13 @@ const GestApp=({logout})=>{
             <tbody>
               {[...ventes].reverse().map((v,i)=>(
                 <TRow key={v.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{v.id}</span>,
-                  <b style={{color:TXT}}>{v.client}</b>,
-                  <span style={{color:MUT,fontSize:11}}>{v.date}</span>,
-                  <span>{v.lignes} art.</span>,
-                  <span style={{color:GR,fontWeight:700}}>{v.montant.toLocaleString()} F</span>,
-                  <Chip col={v.statut==="Livrée"?GR:OR}>{v.statut}</Chip>,
-                  <div style={{display:"flex",gap:5}}>
+                  <span key={0} style={{color:MUT,fontSize:11}}>#{v.id}</span>,
+                  <b key={1} style={{color:TXT}}>{v.client}</b>,
+                  <span key={2} style={{color:MUT,fontSize:11}}>{v.date}</span>,
+                  <span key={3}>{v.lignes} art.</span>,
+                  <span key={4} style={{color:GR,fontWeight:700}}>{v.montant.toLocaleString()} F</span>,
+                  <Chip key={5} col={v.statut==="Livrée"?GR:OR}>{v.statut}</Chip>,
+                  <div key={6} style={{display:"flex",gap:5}}>
                     {v.statut==="En cours"&&<Btn sm ic="local_shipping" col={GR} onClick={()=>livrer(v.id)}>Livrer</Btn>}
                     <Btn sm ic="cancel" v="outline" col={RD} onClick={()=>annVente(v.id)}>Annuler</Btn>
                   </div>
@@ -1359,14 +1832,14 @@ const GestApp=({logout})=>{
               {[...cmdf].reverse().map((c,i)=>{
                 const sc={Validée:GR,"En attente":OR,Reçue:P,Annulée:RD};
                 return <TRow key={c.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{c.id}</span>,
-                  <b style={{color:TXT}}>{c.fourn}</b>,
-                  <span style={{color:P,fontSize:12}}>{c.num}</span>,
-                  <span style={{color:MUT,fontSize:11}}>{c.date}</span>,
-                  <span style={{color:MUT,fontSize:11}}>{c.dateLiv}</span>,
-                  <span style={{color:GR,fontWeight:700}}>{c.montant.toLocaleString()} F</span>,
-                  <Chip col={sc[c.statut]||MUT}>{c.statut}</Chip>,
-                  <div style={{display:"flex",gap:5}}>
+                  <span key={0} style={{color:MUT,fontSize:11}}>#{c.id}</span>,
+                  <b key={1} style={{color:TXT}}>{c.fourn}</b>,
+                  <span key={2} style={{color:P,fontSize:12}}>{c.num}</span>,
+                  <span key={3} style={{color:MUT,fontSize:11}}>{c.date}</span>,
+                  <span key={4} style={{color:MUT,fontSize:11}}>{c.dateLiv}</span>,
+                  <span key={5} style={{color:GR,fontWeight:700}}>{c.montant.toLocaleString()} F</span>,
+                  <Chip key={6} col={sc[c.statut]||MUT}>{c.statut}</Chip>,
+                  <div key={7} style={{display:"flex",gap:5}}>
                     {c.statut==="En attente"&&<Btn sm ic="check_circle" col={GR} onClick={()=>validerCmd(c.id)}>Valider</Btn>}
                     {c.statut==="Validée"&&<Btn sm ic="inventory" v="ghost" onClick={()=>recevoirCmd(c.id)}>Réceptionner</Btn>}
                     {["En attente","Validée"].includes(c.statut)&&<Btn sm ic="cancel" v="outline" col={RD} onClick={()=>annCmd(c.id)}>Annuler</Btn>}
@@ -1424,12 +1897,12 @@ const GestApp=({logout})=>{
             <tbody>
               {[...mouvs].reverse().map((m,i)=>(
                 <TRow key={m.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{m.id}</span>,
-                  <b style={{color:TXT}}>{m.produit}</b>,
-                  <Chip col={m.type==="ENTREE"?GR:RD}>{m.type}</Chip>,
-                  <b>{m.qte}</b>,<span style={{color:MUT}}>{m.avant}</span>,
-                  <b style={{color:m.type==="ENTREE"?GR:RD}}>{m.apres}</b>,
-                  <span style={{color:MUT,fontSize:11}}>{m.date}</span>
+                  <span key={0} style={{color:MUT,fontSize:11}}>#{m.id}</span>,
+                  <b key={1} style={{color:TXT}}>{m.produit}</b>,
+                  <Chip key={2} col={m.type==="ENTREE"?GR:RD}>{m.type}</Chip>,
+                  <b key={3}>{m.qte}</b>,<span key={4} style={{color:MUT}}>{m.avant}</span>,
+                  <b key={5} style={{color:m.type==="ENTREE"?GR:RD}}>{m.apres}</b>,
+                  <span key={6} style={{color:MUT,fontSize:11}}>{m.date}</span>
                 ]}/>
               ))}
             </tbody>
@@ -1469,13 +1942,13 @@ const GestApp=({logout})=>{
             <tbody>
               {[...pertes].reverse().map((p,i)=>(
                 <TRow key={p.id} i={i} cells={[
-                  <span style={{color:MUT,fontSize:11}}>#{p.id}</span>,
-                  <b style={{color:TXT}}>{p.produit}</b>,
-                  <Chip col={RD}>{p.cause}</Chip>,
-                  <b style={{color:RD}}>{p.qte}</b>,
-                  <span style={{color:OR,fontWeight:700}}>{p.impact.toLocaleString()}</span>,
-                  <span style={{color:MUT,fontSize:11}}>{p.date}</span>,
-                  <Btn sm ic="delete" v="outline" col={RD} onClick={()=>delPerte(p.id)}>Suppr.</Btn>
+                  <span key={0} style={{color:MUT,fontSize:11}}>#{p.id}</span>,
+                  <b key={1} style={{color:TXT}}>{p.produit}</b>,
+                  <Chip key={2} col={RD}>{p.cause}</Chip>,
+                  <b key={3} style={{color:RD}}>{p.qte}</b>,
+                  <span key={4} style={{color:OR,fontWeight:700}}>{p.impact.toLocaleString()}</span>,
+                  <span key={5} style={{color:MUT,fontSize:11}}>{p.date}</span>,
+                  <Btn key={6} sm ic="delete" v="outline" col={RD} onClick={()=>delPerte(p.id)}>Suppr.</Btn>
                 ]}/>
               ))}
             </tbody>
@@ -1536,6 +2009,47 @@ const GestApp=({logout})=>{
                 {!a.lue&&<Chip col={a.col}>Non lue</Chip>}
                 {!a.lue&&<Btn sm ic="visibility" v="outline" col={a.col} onClick={()=>marquerLue(a.id)}>Marquer lue</Btn>}
                 <Btn sm ic="done" col={GR} onClick={()=>traiter(a.id)}>Traiter</Btn>
+              </div>
+            </div>
+          ))}
+        </Card>
+      </div>
+    ),
+    g_recom:(
+      <div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:18}}>
+          <KPI ic="shopping_bag" label="Recommandations" value={recs.length} col={P}/>
+          <KPI ic="priority_high" label="Urgentes" value={recs.filter(r=>r.prio==="URGENTE"&&r.statut==="attente").length} col={RD}/>
+          <KPI ic="schedule" label="En attente" value={recs.filter(r=>r.statut==="attente").length} col={OR}/>
+          <KPI ic="check_circle" label="Validées" value={recs.filter(r=>r.statut==="validee").length} col={GR}/>
+        </div>
+        <Card>
+          <SH title="Recommandations d'achat" ic="shopping_bag"/>
+          {recs.map(r=>(
+            <div key={r.id} style={{
+              display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"13px 15px",borderRadius:13,marginBottom:9,
+              background:r.statut!=="attente"?BG:r.col+"0A",
+              border:`1px solid ${r.statut!=="attente"?BOR:r.col+"33"}`,
+              opacity:r.statut!=="attente"?.6:1,
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:13}}>
+                <div style={{width:42,height:42,borderRadius:11,background:r.col+"18",
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <Ic n="lightbulb" s={20} c={r.col}/>
+                </div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:700,color:TXT}}>{r.produit}</div>
+                  <div style={{fontSize:12,color:MUT}}>{r.justif}</div>
+                  <div style={{fontSize:11,color:MUT}}>⏰ Date limite : <b style={{color:TXT}}>{r.dl}</b></div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <div style={{textAlign:"center",minWidth:55}}><div style={{fontSize:20,fontWeight:800,color:r.col}}>{r.qte}</div><div style={{fontSize:10,color:MUT}}>unités</div></div>
+                <Chip col={r.col}>Priorité {r.prio}</Chip>
+                {r.statut==="attente"&&<><Btn sm ic="check_circle" col={GR} onClick={()=>valRec(r.id)}>Valider</Btn><Btn sm ic="close" v="outline" col={MUT} onClick={()=>ignRec(r.id)}>Ignorer</Btn></>}
+                {r.statut==="validee"&&<Chip col={GR}>✓ Validée</Chip>}
+                {r.statut==="ignoree"&&<Chip col={RD}>✗ Ignorée</Chip>}
               </div>
             </div>
           ))}
@@ -1827,11 +2341,39 @@ export default function App() {
   const [screen,setScreen]=useState("login");
   const [role,setRole]=useState(null);
 
-  // Injection des fonts
+  // Injection des fonts et animations
   if(!document.getElementById("mi")){
     const l=document.createElement("link");l.id="mi";l.rel="stylesheet";
     l.href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap";
     document.head.appendChild(l);
+  }
+  
+  // Ajouter les animations CSS
+  if(!document.getElementById("animations")){
+    const style=document.createElement("style");style.id="animations";
+    style.textContent=`
+      @keyframes slideInBounce {
+        0% { transform: translateX(400px) scale(0.8); opacity: 0; }
+        60% { transform: translateX(-20px) scale(1.05); opacity: 1; }
+        100% { transform: translateX(0) scale(1); opacity: 1; }
+      }
+      @keyframes iconPulse {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.1); }
+      }
+      @keyframes fadeInUp {
+        0% { transform: translateY(20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes slideDown {
+        0% { transform: translateY(-10px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+      .hover-scale { transition: transform 0.2s ease; }
+      .hover-scale:hover { transform: scale(1.02); }
+      .search-highlight { background: #FFF3CD; padding: 2px 4px; border-radius: 3px; }
+    `;
+    document.head.appendChild(style);
   }
 
   const login=(r)=>{setRole(r);setScreen("app");};

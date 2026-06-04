@@ -1,7 +1,7 @@
 import React from 'react'
 import { Plus, Minus, Package, Truck, FileText, AlertTriangle } from 'lucide-react'
 
-const QuickActions = () => {
+const QuickActions = ({ onAction = () => {} }) => {
   const actions = [
     {
       title: 'Entrée de stock',
@@ -48,8 +48,7 @@ const QuickActions = () => {
   ]
 
   const handleAction = (actionType) => {
-    console.log(`Action: ${actionType}`)
-    // Ici vous pouvez rediriger vers la page appropriée ou ouvrir une modal
+    onAction(actionType)
   }
 
   return (

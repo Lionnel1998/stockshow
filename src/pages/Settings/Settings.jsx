@@ -74,12 +74,7 @@ const Settings = () => {
   }
 
   const handleSaveSettings = () => {
-    console.log('Settings saved:', {
-      companySettings,
-      userSettings,
-      notifications,
-      stockThresholds
-    })
+    // TODO: Envoyer les paramètres au backend ou enregistrer les modifications côté serveur
   }
 
   return (

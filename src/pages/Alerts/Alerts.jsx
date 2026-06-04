@@ -185,11 +185,11 @@ const Alerts = () => {
   }
 
   const handleMarkAsRead = (alertId) => {
-    console.log(`Mark alert ${alertId} as read`)
+    // TODO: Marquer l'alerte comme lue via l'API
   }
 
   const handleDismissAlert = (alertId) => {
-    console.log(`Dismiss alert ${alertId}`)
+    // TODO: Supprimer ou masquer l'alerte via l'API
   }
 
   const filteredAlerts = alerts.filter(alert => {
