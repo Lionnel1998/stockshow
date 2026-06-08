@@ -6,15 +6,23 @@ const RoleBasedAccess = ({ children, requiredRole, fallback = null }) => {
 
   if (!user) return fallback
 
-  // Mapping des rôles avec hiérarchie
+  // Mapping des rôles avec hiérarchie (valeurs backend = role.nomRole)
+  // On normalise pour éviter les soucis de casse / nom.
+  const normalize = (r) => (r || '').toString().trim().toLowerCase()
+
   const roleHierarchy = {
+    // Backend
     'administrateur': 3,
-    'gestionnaire_stock': 2,
-    'gerant': 1
+    'gestionnaire': 2,
+    'gerant': 1,
+
+    // Compatibilité avec éventuels anciens noms
+    'gestionnaire_stock': 2
   }
 
-  const userLevel = roleHierarchy[user.role] || 0
-  const requiredLevel = roleHierarchy[requiredRole] || 0
+  const userLevel = roleHierarchy[normalize(user.role)] || 0
+  const requiredLevel = roleHierarchy[normalize(requiredRole)] || 0
+
 
   if (userLevel >= requiredLevel) {
     return children

@@ -1,15 +1,5 @@
-const { Utilisateur, Role } = require('../models');
+const { Utilisateur, Role, Entreprise } = require('../models');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-
-// Configuration de l'email
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
 
 // Inscription
 const inscription = async (req, res) => {
@@ -100,10 +90,12 @@ const connexion = async (req, res) => {
         }
 
         // Vérifier le mot de passe
+        // IMPORTANT: comparaison bcrypt stricte. Rien ne doit “accepter” automatiquement.
         const motDePasseValide = await utilisateur.verifierMotDePasse(motDePasse);
         if (!motDePasseValide) {
             return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
         }
+
 
         // Vérifier si le compte est validé
         if (utilisateur.statut_inscription === 'en_attente') {
