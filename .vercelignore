@@ -1,5 +1,5 @@
 node_modules
-dist
+.git
 .env
 .env.local
 .env.*.local
@@ -7,6 +7,4 @@ backend/node_modules
 backend/.env
 backend/stockshow.db
 backend/stockshow.db-journal
-*.log
-.DS_Store
-.vercel
+dist
