@@ -11,7 +11,6 @@ import {
   Package,
   Calendar,
   DollarSign,
-  User,
   CheckCircle,
   Clock,
   XCircle

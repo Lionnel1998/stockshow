@@ -1,16 +1,10 @@
 import React from 'react'
 import { 
-  Package, 
-  TrendingUp, 
-  AlertTriangle, 
-  ShoppingCart,
-  ArrowUp,
-  ArrowDown,
+  Package,
+  AlertTriangle,
   Bell,
-  Truck,
-  Eye,
-  Plus,
-  Minus
+  TrendingUp,
+  ShoppingCart
 } from 'lucide-react'
 import StatCard from '../components/Dashboard/StatCard'
 import StockChart from '../components/Dashboard/StockChart'

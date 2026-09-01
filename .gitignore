@@ -10,3 +10,6 @@ backend/stockshow.db-journal
 *.log
 .DS_Store
 .vercel
+
+.vercel
+.env*

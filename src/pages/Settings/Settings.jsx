@@ -8,10 +8,7 @@ import {
   Database,
   Save,
   Eye,
-  EyeOff,
-  Plus,
-  Trash2,
-  Edit
+  EyeOff
 } from 'lucide-react'
 
 const Settings = () => {

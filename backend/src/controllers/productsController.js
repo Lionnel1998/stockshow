@@ -164,7 +164,7 @@ const updateProduct = async (req, res) => {
             description: description !== undefined ? description : produit.description,
             prixVente: prixVente || produit.prixVente,
             prixAchat: prixAchat || produit.prixAchat,
-            stockActuel: stockActiel !== undefined ? stockActuel : produit.stockActuel,
+            stockActuel: stockActuel !== undefined ? stockActuel : produit.stockActuel,
             seuilAlerte: seuilAlerte !== undefined ? seuilAlerte : produit.seuilAlerte,
             code_barre: code_barre || produit.code_barre,
             idCategorie: idCategorie || produit.idCategorie,

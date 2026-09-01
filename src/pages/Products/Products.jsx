@@ -8,9 +8,7 @@ import {
   Eye, 
   Package,
   AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  BarChart3
+  TrendingUp
 } from 'lucide-react'
 
 const Products = () => {

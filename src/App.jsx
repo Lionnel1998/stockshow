@@ -1482,7 +1482,7 @@ const GestApp=({logout})=>{
   const [showNotifications,setShowNotifications]=useState(false);
   
   // Données pour les recommandations d'achat
-  const [recs]=useState([
+  const [recs,setRecs]=useState([
     {id:1,produit:"T-shirt coton",qte:25,justif:"Stock critique (3 unités) + prévision ventes",dl:"05/04",prio:"URGENTE",col:RD,statut:"attente"},
     {id:2,produit:"Sac à main cuir",qte:15,justif:"Stock faible (12 unités) + saisonnalité",dl:"08/04",prio:"NORMALE",col:OR,statut:"attente"},
     {id:3,produit:"Chaussures Nike",qte:40,justif:"Recommandation IA basée sur tendance +30%",dl:"12/04",prio:"NORMALE",col:P,statut:"attente"},

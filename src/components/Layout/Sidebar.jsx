@@ -11,11 +11,10 @@ import {
   FileText, 
   Settings, 
   LogOut,
-  Menu,
   X,
   TrendingUp,
   Users,
-  AlertTriangle as LossIcon,
+  AlertTriangle,
   Folder
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
@@ -124,7 +123,7 @@ const Sidebar = () => {
         },
         {
           path: '/pertes',
-          icon: LossIcon,
+          icon: AlertTriangle,
           label: 'Pertes',
           description: 'Enregistrement des pertes'
         }

@@ -1,4 +1,5 @@
-const { MouvementStock, Produit, Utilisateur } = require('../models');
+const { MouvementStock, Produit, Utilisateur, Categorie, Fournisseur } = require('../models');
+const { Op } = require('sequelize');
 
 // Enregistrer un mouvement de stock
 const recordStockMovement = async (req, res) => {

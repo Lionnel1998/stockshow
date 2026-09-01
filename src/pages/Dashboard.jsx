@@ -1,11 +1,10 @@
 import React from 'react'
 import { 
   Package, 
-  TrendingUp, 
+  
   AlertTriangle, 
   ShoppingCart,
   ArrowUp,
-  ArrowDown,
   Bell,
   Truck,
   Eye,
@@ -15,8 +14,7 @@ import {
   Users,
   DollarSign,
   Calendar,
-  Search,
-  Filter
+  
 } from 'lucide-react'
 
 const Dashboard = () => {

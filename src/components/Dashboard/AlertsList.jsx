@@ -46,7 +46,7 @@ const AlertsList = () => {
     }
   ]
 
-  getAlertIcon = (type) => {
+  const getAlertIcon = (type) => {
     switch (type) {
       case 'stock_low':
         return <AlertTriangle className="w-4 h-4 text-red-500" />
@@ -61,7 +61,7 @@ const AlertsList = () => {
     }
   }
 
-  getPriorityColor = (priority) => {
+  const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high':
         return 'border-l-red-500 bg-red-50'
@@ -74,7 +74,7 @@ const AlertsList = () => {
     }
   }
 
-  getPriorityBadge = (priority) => {
+  const getPriorityBadge = (priority) => {
     switch (priority) {
       case 'high':
         return 'bg-red-100 text-red-800'
@@ -87,7 +87,7 @@ const AlertsList = () => {
     }
   }
 
-  getPriorityLabel = (priority) => {
+  const getPriorityLabel = (priority) => {
     switch (priority) {
       case 'high':
         return 'Élevée'

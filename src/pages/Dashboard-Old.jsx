@@ -1,17 +1,13 @@
 import React from 'react'
 import { 
-  Package, 
-  TrendingUp, 
-  AlertTriangle, 
-  ShoppingCart,
+  Package,
   ArrowUp,
-  ArrowDown,
   Bell,
-  Truck,
-  Eye,
-  Plus,
-  Minus
+  TrendingUp
 } from 'lucide-react'
+
+import RecentMovements from '../components/Dashboard/RecentMovements'
+import QuickActions from '../components/Dashboard/QuickActions'
 
 const Dashboard = () => {
   return (

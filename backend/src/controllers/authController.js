@@ -1,15 +1,5 @@
-const { Utilisateur, Role } = require('../models');
+const { Utilisateur, Role, Entreprise } = require('../models');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-
-// Configuration de l'email
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
 
 // Inscription
 const inscription = async (req, res) => {

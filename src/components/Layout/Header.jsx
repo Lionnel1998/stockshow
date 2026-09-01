@@ -8,9 +8,7 @@ import {
   User, 
   Settings,
   LogOut,
-  ChevronDown,
-  Sun,
-  Moon
+  ChevronDown
 } from 'lucide-react'
 
 const Header = () => {

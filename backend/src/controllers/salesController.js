@@ -1,4 +1,5 @@
-const { Commande, StatutCommande, Utilisateur, Produit } = require('../models');
+const { Commande, StatutCommande, Utilisateur } = require('../models');
+const { Op } = require('sequelize');
 
 // Obtenir toutes les ventes/commandes
 const getAllSales = async (req, res) => {
