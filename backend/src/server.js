@@ -38,6 +38,7 @@ const startServer = async () => {
         app.use('/api/losses', require('./routes/losses'));
         app.use('/api/forecasts', require('./routes/forecasts'));
         app.use('/api/recommendations', require('./routes/recommendations'));
+        app.use('/api/ai', require('./routes/ai'));
 
         // Route racine
         app.get('/', (req, res) => {

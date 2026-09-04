@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import AssistantIA from './pages/AI/AssistantIA';
 
 /* ── Couleurs ── */
 const P="#8854C0", P2="#9F7AEA", BG="#FFFFFF", W="#FFFFFF";
@@ -2074,6 +2075,7 @@ const GestApp=({logout})=>{
 const GERANT_M=[
   {id:"r_dash",icon:"dashboard",label:"Tableau de bord"},
   {id:"r_prev",icon:"insights",label:"Prévisions"},
+  {id:"r_ai",icon:"auto_awesome",label:"Assistant IA"},
   {id:"r_rapp",icon:"bar_chart",label:"Rapports"},
   {id:"r_recom",icon:"shopping_bag",label:"Recommandations"},
   {id:"r_alert",icon:"notifications",label:"Alertes",badge:2},
@@ -2093,7 +2095,7 @@ const GerantApp=({logout})=>{
   const valRec=(id)=>{setRecs(r=>r.map(x=>x.id===id?{...x,statut:"validee"}:x));show("Recommandation validée");};
   const ignRec=(id)=>{setRecs(r=>r.map(x=>x.id===id?{...x,statut:"ignoree"}:x));show("Recommandation ignorée");};
 
-  const titleMap={r_dash:"Tableau de bord",r_prev:"Prévisions",r_rapp:"Rapports",r_recom:"Recommandations d'achat",r_alert:"Alertes"};
+  const titleMap={r_dash:"Tableau de bord",r_prev:"Prévisions",r_ai:"Assistant IA",r_rapp:"Rapports",r_recom:"Recommandations d'achat",r_alert:"Alertes"};
 
   const content={
     r_dash:(
@@ -2218,6 +2220,9 @@ const GerantApp=({logout})=>{
           })}
         </Card>
       </div>
+    ),
+    r_ai:(
+      <AssistantIA />
     ),
     r_rapp:(
       <div>

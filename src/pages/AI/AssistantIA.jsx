@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, BrainCircuit, ArrowUpRight, Loader2, AlertTriangle } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const AssistantIA = () => {
   const [question, setQuestion] = useState('Quel produit doit être commandé en priorité ?');
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ const AssistantIA = () => {
         const token = localStorage.getItem('token');
         
         // Récupérer les produits
-        const productsRes = await fetch('http://localhost:5000/api/products', {
+        const productsRes = await fetch(`${API_BASE_URL}/products`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         }).catch(() => null);
         
@@ -44,7 +46,7 @@ const AssistantIA = () => {
         }
 
         // Récupérer les alertes
-        const alertsRes = await fetch('http://localhost:5000/api/alerts', {
+        const alertsRes = await fetch(`${API_BASE_URL}/alerts`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         }).catch(() => null);
         
@@ -55,7 +57,7 @@ const AssistantIA = () => {
           }
         }
       } catch (error) {
-        console.log('Utilisation des données d'exemple');
+        console.log("Utilisation des données d'exemple");
       } finally {
         setLoadingData(false);
       }
@@ -73,7 +75,7 @@ const AssistantIA = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/ai/analyze', {
+      const response = await fetch(`${API_BASE_URL}/ai/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

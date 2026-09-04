@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Users,
   AlertTriangle,
-  Folder
+  Folder,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -137,6 +138,12 @@ const Sidebar = () => {
           icon: TrendingUp,
           label: 'Prévisions',
           description: 'Prévisions et recommandations'
+        },
+        {
+          path: '/assistant-ia',
+          icon: Sparkles,
+          label: 'Assistant IA',
+          description: 'Analyse intelligente du stock'
         },
         {
           path: '/rapports',
